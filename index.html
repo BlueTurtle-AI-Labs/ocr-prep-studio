@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OCR Prep Studio — Page Ranges &amp; Masks for Clean OCR</title>
+<link rel="stylesheet" href="style.css" />
+
+<!-- PDF.js: renders pages to canvas (unpkg URL confirmed working) -->
+<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<!-- pdf-lib: writes the output PDFs. Bundled locally so no CDN/ad-blocker can break export. -->
+<script src="pdf-lib.min.js"></script>
+<!-- Fallback: if either library failed to load, retry from CDNs -->
+<script>
+(function () {
+  function retry(src) {
+    return new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = resolve; // resolve either way; app.js reports what's still missing
+      document.head.appendChild(s);
+    });
+  }
+  var jobs = [];
+  if (!window.pdfjsLib) {
+    jobs.push(retry("https://cdn.jsdelivr.net/npm/[email protected]/build/pdf.min.js"));
+  }
+  if (!window.PDFLib) {
+    jobs.push(
+      retry("https://cdn.jsdelivr.net/npm/[email protected]/dist/pdf-lib.min.js").then(function () {
+        if (!window.PDFLib) return retry("https://unpkg.com/[email protected]/dist/pdf-lib.min.js");
+      })
+    );
+  }
+  if (jobs.length) window.__libsReady = Promise.all(jobs);
+})();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="mark">OCR</span>Prep Studio<span class="sub">PAGE RANGES &amp; MASKS FOR CLEAN OCR</span></div>
+  <span class="filename" id="fileNameLabel"></span>
+  <div class="spacer"></div>
+  <label class="btn btn-primary" for="fileInput">Load PDF</label>
+  <input type="file" id="fileInput" accept="application/pdf" />
+  <button class="btn" id="saveProjectBtn" disabled>Save Project</button>
+  <label class="btn" for="loadProjectInput">Load Project</label>
+  <input type="file" id="loadProjectInput" accept="application/json" />
+  <button class="btn btn-primary" id="exportBtn" disabled>Export PDFs</button>
+</header>
+
+<div class="app">
+
+  <!-- LEFT: ranges + navigation -->
+  <aside class="panel panel-left">
+
+    <div class="section">
+      <h2><span class="eyebrow">Step 1</span>Page Ranges</h2>
+      <p class="hint" style="margin-top:0;">By default the whole document is included. Add a range only if you want to restrict export to specific pages (e.g. skip translation/notes pages).</p>
+      <div class="field-row">
+        <input type="number" class="num" id="rangeStart" placeholder="from" min="1" />
+        <input type="number" class="num" id="rangeEnd" placeholder="to" min="1" />
+        <input type="text" id="rangeLabel" placeholder="Label (optional)" />
+      </div>
+      <button class="btn btn-block" id="addRangeBtn">+ Add Range</button>
+      <div id="rangeList" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="section">
+      <h2><span class="eyebrow">Step 2</span>Navigate</h2>
+      <div class="pagenav">
+        <button class="btn btn-sm" id="prevPageBtn">‹ Prev</button>
+        <input type="number" id="pageInput" min="1" value="1" />
+        <span class="of">/ <span id="numPagesLabel">0</span></span>
+        <button class="btn btn-sm" id="nextPageBtn">Next ›</button>
+      </div>
+      <div class="page-status" id="pageStatus">Load a PDF to begin.</div>
+      <div class="chiprow" id="includedChips"></div>
+    </div>
+
+  </aside>
+
+  <!-- CENTER: canvas viewer -->
+  <main class="viewer">
+    <div class="viewer-toolbar">
+      <div class="group">
+        <label class="inline">Zoom
+          <select id="zoomSelect">
+            <option value="0.9">90%</option>
+            <option value="1.1" selected>110%</option>
+            <option value="1.3">130%</option>
+            <option value="1.6">160%</option>
+          </select>
+        </label>
+      </div>
+      <div class="divider"></div>
+      <div class="group">
+        <label class="inline">Mask color</label>
+        <span class="swatch" data-color="#ffffff" style="background:#ffffff;" title="White"></span>
+        <span class="swatch active" data-color="#000000" style="background:#000000;" title="Black"></span>
+      </div>
+      <div class="divider"></div>
+      <div class="group">
+        <button class="btn btn-sm" id="deleteSelectedBtn" disabled>Delete Selected Box</button>
+        <button class="btn btn-sm" id="clearPageBtn" disabled>Clear All Boxes Here</button>
+      </div>
+    </div>
+    <div class="canvas-scroll" id="canvasScroll">
+      <div class="empty-state" id="emptyState">
+        <span class="glyph">▨</span>
+        Load a scanned PDF, add a page range on the left,<br/>then draw boxes here to mask out anything that shouldn't reach OCR.
+      </div>
+      <div class="canvas-stack" id="canvasStack" style="display:none;">
+        <canvas id="baseCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT: mask editing + export -->
+  <aside class="panel panel-right">
+
+    <div class="section">
+      <h2><span class="eyebrow">Step 3</span>Mask This Page</h2>
+      <p class="hint" style="margin-top:0;">Boxes are independent per page by default. Draw directly on the page, or use a quick shortcut below.</p>
+      <div class="quickmask-grid">
+        <button class="btn btn-sm" id="qmTop" disabled>Mask Top Half</button>
+        <button class="btn btn-sm" id="qmBottom" disabled>Mask Bottom Half</button>
+        <button class="btn btn-sm" id="qmLeft" disabled>Mask Left Half</button>
+        <button class="btn btn-sm" id="qmRight" disabled>Mask Right Half</button>
+      </div>
+      <div id="maskList" style="margin:6px 0 12px 0;"></div>
+      <button class="btn btn-block" id="copyNextBtn" disabled>Copy These Boxes → Next Page</button>
+      <button class="btn btn-block" id="copyRangeBtn" disabled style="margin-top:6px;">Copy These Boxes → Whole Range</button>
+      <p class="hint">"Whole range" means every page in the range this page belongs to (or the entire document, if you haven't added any ranges). This overwrites boxes already on those pages.</p>
+    </div>
+
+    <div class="section">
+      <h2><span class="eyebrow">Step 4</span>Export</h2>
+      <label class="inline" style="margin-bottom:8px; display:flex;">Resolution
+        <select id="resolutionSelect" style="margin-left:auto;">
+          <option value="1" selected>1× (fast, small)</option>
+          <option value="2">2× (recommended for OCR)</option>
+          <option value="3">3× (max quality, slow)</option>
+        </select>
+      </label>
+      <button class="btn btn-primary btn-block" id="exportBtn2" disabled>Export Masked + Clean PDFs</button>
+      <p class="hint">Produces two PDFs with identical page ranges: one with your masks baked in, one without — ready for your OCR pipeline.</p>
+    </div>
+
+  </aside>
+
+</div>
+
+<div id="statusBar">Ready.</div>
+
+<div class="modal-overlay hidden" id="exportModal">
+  <div class="modal-box">
+    <h3>Export Ready</h3>
+    <p id="exportModalSummary" class="hint" style="margin-bottom:16px;"></p>
+    <button class="btn btn-primary btn-block" id="downloadMaskedBtn">Download Masked PDF</button>
+    <button class="btn btn-block" id="downloadCleanBtn" style="margin-top:8px;">Download Clean PDF</button>
+    <button class="btn btn-ghost btn-block" id="closeExportModalBtn" style="margin-top:14px; color:#000000">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
