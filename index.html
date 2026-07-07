@@ -98,8 +98,8 @@
       <div class="divider"></div>
       <div class="group">
         <label class="inline">Mask color</label>
-        <span class="swatch" data-color="#ffffff" style="background:#ffffff;" title="White"></span>
-        <span class="swatch active" data-color="#000000" style="background:#000000;" title="Black"></span>
+        <span class="swatch active" data-color="#ffffff" style="background:#ffffff;" title="White"></span>
+        <span class="swatch" data-color="#000000" style="background:#000000;" title="Black"></span>
       </div>
       <div class="divider"></div>
       <div class="group">
@@ -139,15 +139,16 @@
 
     <div class="section">
       <h2><span class="eyebrow">Step 4</span>Export</h2>
-      <label class="inline" style="margin-bottom:8px; display:flex;">Resolution
+      <label class="inline" style="margin-bottom:8px; display:flex;">Output DPI
         <select id="resolutionSelect" style="margin-left:auto;">
-          <option value="1" selected>1× (fast, small)</option>
-          <option value="2">2× (recommended for OCR)</option>
-          <option value="3">3× (max quality, slow)</option>
+          <option value="150">150 DPI (fast, small — soft output on most scans)</option>
+          <option value="300" selected>300 DPI (recommended — matches most book scans)</option>
+          <option value="400">400 DPI (high quality, slower)</option>
+          <option value="600">600 DPI (max quality, slow &amp; large files)</option>
         </select>
       </label>
       <button class="btn btn-primary btn-block" id="exportBtn2" disabled>Export Masked + Clean PDFs</button>
-      <p class="hint">Produces two PDFs with identical page ranges: one with your masks baked in, one without — ready for your OCR pipeline.</p>
+      <p class="hint">Pick a DPI at or above your original scan's DPI (usually 200–400) so the export doesn't lose detail. Going much higher than the source just makes bigger files without adding real quality.</p>
     </div>
 
   </aside>

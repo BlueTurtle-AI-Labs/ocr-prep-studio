@@ -632,7 +632,8 @@ async function exportPdfs() {
   }
   const pages = getIncludedPages();
   if (!pages.length) { alert("Nothing to export."); return; }
-  const scale = parseFloat(resolutionSelect.value);
+  const dpi = parseFloat(resolutionSelect.value);
+  const scale = dpi / 72; // PDF points are defined as 1/72 inch, so this maps DPI to a PDF.js render scale
 
   exportBtn.disabled = exportBtn2.disabled = true;
   exportBtn.textContent = exportBtn2.textContent = "Rendering PDFs...";
