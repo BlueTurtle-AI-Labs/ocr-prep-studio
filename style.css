@@ -31,6 +31,8 @@
   --verdigris-d:#2e4f46;
   --ink-text:#241f18;
   --muted:#77705c;
+  --left-w:290px;
+  --right-w:300px;
 }
 
 *{box-sizing:border-box;}
@@ -114,18 +116,32 @@ label.btn{ display:inline-flex; align-items:center; }
 /* ---------- App layout ---------- */
 .app{
   display:grid;
-  grid-template-columns:290px 1fr 300px;
+  grid-template-columns: var(--left-w) 6px 1fr 6px var(--right-w);
   height:calc(100vh - 52px - 26px);
 }
+
+.resizer{
+  background:var(--ink-line);
+  cursor:col-resize;
+  position:relative;
+}
+.resizer::after{
+  /* widen the actual hit-area beyond the visible 6px line, without affecting layout */
+  content:"";
+  position:absolute;
+  top:0; bottom:0;
+  left:-3px; right:-3px;
+}
+.resizer:hover, .resizer.active{ background:var(--oxblood); }
 
 .panel{
   background:var(--parchment);
   color:var(--ink-text);
   overflow-y:auto;
+  overflow-x:hidden;
   padding:16px;
+  min-width:0;
 }
-.panel-left{ border-right:1px solid var(--parchment-line); }
-.panel-right{ border-left:1px solid var(--parchment-line); }
 
 .panel h2{
   font-family:'Spectral',serif;
@@ -148,20 +164,60 @@ label.btn{ display:inline-flex; align-items:center; }
 }
 .section{ margin-bottom:22px; }
 .hint{ font-size:11.5px; color:var(--muted); line-height:1.5; margin:6px 0 0 0; }
+.hint-tight{ margin-top:0; }
 
-/* range form */
-.field-row{ display:flex; gap:6px; margin-bottom:8px; }
-.field-row input{
+/* number inputs: strip native spinner arrows so placeholders/values
+   never get clipped by browser-drawn increment buttons */
+input[type="number"]{ -moz-appearance:textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+}
+
+/* shared text/number field look */
+.field-full, .num, .pagenav input, #rangeLabel{
   border:1px solid var(--parchment-line);
   background:var(--paper);
   color:var(--ink-text);
-  padding:6px 8px;
+  padding:7px 9px;
   border-radius:3px;
   font-size:13px;
-  width:100%;
 }
-.field-row input.num{ width:56px; flex:none; text-align:center; font-family:'IBM Plex Mono',monospace; }
-.field-row input:focus, select:focus{ outline:2px solid var(--verdigris); outline-offset:0; }
+.field-full:focus, .num:focus, .pagenav input:focus, select:focus{
+  outline:2px solid var(--verdigris); outline-offset:0;
+}
+
+.field-full{ width:100%; margin-bottom:8px; }
+
+/* range form: page numbers on one row, label full-width below */
+.range-pages-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.num{ width:74px; flex:none; text-align:center; font-family:'IBM Plex Mono',monospace; }
+.range-dash{ color:var(--muted); font-family:'IBM Plex Mono',monospace; font-size:13px; }
+
+.stack-top{ margin-top:10px; }
+.stack-top-sm{ margin-top:6px; }
+.stack-mid{ margin:8px 0 12px 0; }
+.stack-bottom{ margin-bottom:16px; }
+
+.field-label{
+  display:block;
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-text);
+  margin-bottom:6px;
+}
+.select-block{
+  display:block;
+  width:100%;
+  border:1px solid var(--parchment-line);
+  background:var(--paper);
+  color:var(--ink-text);
+  padding:7px 9px;
+  border-radius:3px;
+  font-size:12.5px;
+  margin-bottom:12px;
+}
 
 .range-chip{
   display:flex;
@@ -185,12 +241,11 @@ label.btn{ display:inline-flex; align-items:center; }
 .range-chip button:hover{ color:var(--oxblood); }
 
 /* page nav */
-.pagenav{ display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+.pagenav{ display:flex; align-items:center; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
 .pagenav input{
-  width:56px; text-align:center; font-family:'IBM Plex Mono',monospace;
-  border:1px solid var(--parchment-line); border-radius:3px; padding:6px 4px; background:var(--paper); color:var(--ink-text);
+  width:64px; text-align:center; font-family:'IBM Plex Mono',monospace;
 }
-.pagenav .of{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); }
+.pagenav .of{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted); white-space:nowrap; }
 
 .page-status{
   font-size:12px;
@@ -344,6 +399,10 @@ label.btn{ display:inline-flex; align-items:center; }
   font-size:17px;
   margin:0 0 8px 0;
 }
+/* .btn-ghost is transparent with light (parchment-colored) text — fine on
+   dark backgrounds, but invisible on this modal's light parchment surface */
+.modal-box .btn-ghost{ color:var(--ink-text); border-color:var(--parchment-line); }
+.modal-box .btn-ghost:hover{ border-color:var(--oxblood); }
 
 ::-webkit-scrollbar{ width:10px; height:10px; }
 ::-webkit-scrollbar-track{ background:transparent; }
@@ -351,5 +410,5 @@ label.btn{ display:inline-flex; align-items:center; }
 .panel::-webkit-scrollbar-thumb{ background:var(--parchment-line); }
 
 @media (max-width: 980px){
-  .app{ grid-template-columns:230px 1fr 230px; }
+  :root{ --left-w:230px; --right-w:230px; }
 }

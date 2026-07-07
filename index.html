@@ -58,14 +58,15 @@
 
     <div class="section">
       <h2><span class="eyebrow">Step 1</span>Page Ranges</h2>
-      <p class="hint" style="margin-top:0;">By default the whole document is included. Add a range only if you want to restrict export to specific pages (e.g. skip translation/notes pages).</p>
-      <div class="field-row">
-        <input type="number" class="num" id="rangeStart" placeholder="from" min="1" />
-        <input type="number" class="num" id="rangeEnd" placeholder="to" min="1" />
-        <input type="text" id="rangeLabel" placeholder="Label (optional)" />
+      <p class="hint hint-tight">By default the whole document is included. Add a range only if you want to restrict export to specific pages (e.g. skip translation/notes pages).</p>
+      <div class="range-pages-row">
+        <input type="number" class="num" id="rangeStart" placeholder="From" min="1" />
+        <span class="range-dash">–</span>
+        <input type="number" class="num" id="rangeEnd" placeholder="To" min="1" />
       </div>
+      <input type="text" id="rangeLabel" class="field-full" placeholder="Label (optional)" />
       <button class="btn btn-block" id="addRangeBtn">+ Add Range</button>
-      <div id="rangeList" style="margin-top:10px;"></div>
+      <div id="rangeList" class="stack-top"></div>
     </div>
 
     <div class="section">
@@ -81,6 +82,8 @@
     </div>
 
   </aside>
+
+  <div class="resizer" id="resizerLeft" title="Drag to resize"></div>
 
   <!-- CENTER: canvas viewer -->
   <main class="viewer">
@@ -119,34 +122,35 @@
     </div>
   </main>
 
+  <div class="resizer" id="resizerRight" title="Drag to resize"></div>
+
   <!-- RIGHT: mask editing + export -->
   <aside class="panel panel-right">
 
     <div class="section">
       <h2><span class="eyebrow">Step 3</span>Mask This Page</h2>
-      <p class="hint" style="margin-top:0;">Boxes are independent per page by default. Draw directly on the page, or use a quick shortcut below.</p>
+      <p class="hint hint-tight">Boxes are independent per page by default. Draw directly on the page, or use a quick shortcut below.</p>
       <div class="quickmask-grid">
         <button class="btn btn-sm" id="qmTop" disabled>Mask Top Half</button>
         <button class="btn btn-sm" id="qmBottom" disabled>Mask Bottom Half</button>
         <button class="btn btn-sm" id="qmLeft" disabled>Mask Left Half</button>
         <button class="btn btn-sm" id="qmRight" disabled>Mask Right Half</button>
       </div>
-      <div id="maskList" style="margin:6px 0 12px 0;"></div>
+      <div id="maskList" class="stack-mid"></div>
       <button class="btn btn-block" id="copyNextBtn" disabled>Copy These Boxes → Next Page</button>
-      <button class="btn btn-block" id="copyRangeBtn" disabled style="margin-top:6px;">Copy These Boxes → Whole Range</button>
+      <button class="btn btn-block stack-top-sm" id="copyRangeBtn" disabled>Copy These Boxes → Whole Range</button>
       <p class="hint">"Whole range" means every page in the range this page belongs to (or the entire document, if you haven't added any ranges). This overwrites boxes already on those pages.</p>
     </div>
 
     <div class="section">
       <h2><span class="eyebrow">Step 4</span>Export</h2>
-      <label class="inline" style="margin-bottom:8px; display:flex;">Output DPI
-        <select id="resolutionSelect" style="margin-left:auto;">
-          <option value="150">150 DPI (fast, small — soft output on most scans)</option>
-          <option value="300" selected>300 DPI (recommended — matches most book scans)</option>
-          <option value="400">400 DPI (high quality, slower)</option>
-          <option value="600">600 DPI (max quality, slow &amp; large files)</option>
-        </select>
-      </label>
+      <label class="field-label" for="resolutionSelect">Output DPI</label>
+      <select id="resolutionSelect" class="select-block">
+        <option value="150">150 DPI (fast, small)</option>
+        <option value="300" selected>300 DPI (recommended)</option>
+        <option value="400">400 DPI (high quality)</option>
+        <option value="600">600 DPI (max quality)</option>
+      </select>
       <button class="btn btn-primary btn-block" id="exportBtn2" disabled>Export Masked + Clean PDFs</button>
       <p class="hint">Pick a DPI at or above your original scan's DPI (usually 200–400) so the export doesn't lose detail. Going much higher than the source just makes bigger files without adding real quality.</p>
     </div>
@@ -160,10 +164,10 @@
 <div class="modal-overlay hidden" id="exportModal">
   <div class="modal-box">
     <h3>Export Ready</h3>
-    <p id="exportModalSummary" class="hint" style="margin-bottom:16px;"></p>
+    <p id="exportModalSummary" class="hint hint-tight stack-bottom"></p>
     <button class="btn btn-primary btn-block" id="downloadMaskedBtn">Download Masked PDF</button>
-    <button class="btn btn-block" id="downloadCleanBtn" style="margin-top:8px;">Download Clean PDF</button>
-    <button class="btn btn-ghost btn-block" id="closeExportModalBtn" style="margin-top:14px; color:#000000">Close</button>
+    <button class="btn btn-block stack-top-sm" id="downloadCleanBtn">Download Clean PDF</button>
+    <button class="btn btn-ghost btn-block stack-top" id="closeExportModalBtn">Close</button>
   </div>
 </div>
 

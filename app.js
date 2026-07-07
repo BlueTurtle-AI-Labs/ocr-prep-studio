@@ -73,12 +73,77 @@ const exportModalSummary = $("exportModalSummary");
 const downloadMaskedBtn = $("downloadMaskedBtn");
 const downloadCleanBtn = $("downloadCleanBtn");
 const closeExportModalBtn = $("closeExportModalBtn");
+const resizerLeft = $("resizerLeft");
+const resizerRight = $("resizerRight");
 
 // ---------- status helper ----------
 function setStatus(msg, busy) {
   statusBar.textContent = msg;
   statusBar.classList.toggle("busy", !!busy);
 }
+
+// ============================================================
+// Resizable side panels — drag the thin bars between the panels
+// and the canvas viewer. Widths are kept as CSS custom properties
+// on the root element so a single JS number stays in sync with layout.
+// ============================================================
+(function setupResizers() {
+  const MIN_W = 200, MAX_W = 520;
+  const root = document.documentElement;
+
+  function currentPx(varName) {
+    const v = getComputedStyle(root).getPropertyValue(varName).trim();
+    return parseInt(v, 10) || 0;
+  }
+
+  function bind(handle, varName, growsWithPositiveDelta) {
+    let startX = 0, startW = 0;
+    function onMove(e) {
+      const x = e.touches ? e.touches[0].clientX : e.clientX;
+      const delta = x - startX;
+      const next = growsWithPositiveDelta ? startW + delta : startW - delta;
+      const clamped = Math.max(MIN_W, Math.min(MAX_W, next));
+      root.style.setProperty(varName, clamped + "px");
+    }
+    function onUp() {
+      handle.classList.remove("active");
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+      try {
+        localStorage.setItem("ocrprepPanelWidths", JSON.stringify({
+          left: currentPx("--left-w"), right: currentPx("--right-w"),
+        }));
+      } catch (e) { /* localStorage unavailable — not critical */ }
+    }
+    function onDown(e) {
+      startX = e.touches ? e.touches[0].clientX : e.clientX;
+      startW = currentPx(varName);
+      handle.classList.add("active");
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+      window.addEventListener("touchmove", onMove, { passive: false });
+      window.addEventListener("touchend", onUp);
+      e.preventDefault();
+    }
+    handle.addEventListener("mousedown", onDown);
+    handle.addEventListener("touchstart", onDown, { passive: false });
+    handle.addEventListener("dblclick", () => {
+      root.style.setProperty(varName, varName === "--left-w" ? "290px" : "300px");
+    });
+  }
+
+  // restore any previously saved widths
+  try {
+    const saved = JSON.parse(localStorage.getItem("ocrprepPanelWidths") || "null");
+    if (saved && saved.left) root.style.setProperty("--left-w", saved.left + "px");
+    if (saved && saved.right) root.style.setProperty("--right-w", saved.right + "px");
+  } catch (e) { /* ignore */ }
+
+  bind(resizerLeft, "--left-w", true);
+  bind(resizerRight, "--right-w", false);
+})();
 
 // ---------- library load check (after any CDN fallback) ----------
 window.addEventListener("load", async () => {
